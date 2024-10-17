@@ -14,6 +14,12 @@ widget:
 library_name: transformers
 ---
 
+---
+
+>缺少`phi-3.5-mini-instruct-pytorch-default-v1.tar.gz`,`model-00002-of-00002.safetensors`,`model-00001-of-00002.safetensors`三个文件
+>
+>自己在 [model-00002-of-00002.safetensors...下载](https://www.kaggle.com/models/richolson/phi-3.5-mini-instruct/PyTorch/default?select=model-00001-of-00002.safetensors)
+
 ## Model Summary
 
 Phi-3.5-mini is a lightweight, state-of-the-art open model built upon datasets used for Phi-3 - synthetic data and filtered publicly available websites - with a focus on very high-quality, reasoning dense data. The model belongs to the Phi-3 model family and supports 128K token context length. The model underwent a rigorous enhancement process, incorporating both supervised fine-tuning, proximal policy optimization, and direct preference optimization to ensure precise instruction adherence and robust safety measures.
