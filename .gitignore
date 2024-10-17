@@ -1,0 +1,5 @@
+# 忽略 phi-3.5-mini-instruct-pytorch-default-v1.tar.gz 文件
+phi-3.5-mini-instruct-pytorch-default-v1.tar.gz
+
+# 忽略所有 .safetensors 文件
+*.safetensors
