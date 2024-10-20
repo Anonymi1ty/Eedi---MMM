@@ -15,29 +15,31 @@
 
 """ Phi-3 model configuration"""
 
-
+# 从transformers模块中导入配置和日志工具
 from transformers.configuration_utils import PretrainedConfig
 from transformers.utils import logging
 
-
+# 获取日志记录器对象
 logger = logging.get_logger(__name__)
 
+# 定义预训练配置模型对应的映射，从huggingface加载模型配置文件
 PHI3_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     "microsoft/Phi-3-mini-4k-instruct": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/config.json",
     "microsoft/Phi-3-mini-128k-instruct": "https://huggingface.co/microsoft/Phi-3-mini-128k-instruct/resolve/main/config.json",
 }
+# **需要从HuggingFace加载的部分**
 
-
+# 定义Phi3Config类，继承自PretrainedConfig
 class Phi3Config(PretrainedConfig):
     r"""
     This is the configuration class to store the configuration of a [`Phi3Model`]. It is used to instantiate a Phi-3
     model according to the specified arguments, defining the model architecture. Instantiating a configuration with the
     defaults will yield a similar configuration to that of the
     [microsoft/Phi-3-mini-4k-instruct](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct).
-
-    Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the
-    documentation from [`PretrainedConfig`] for more information.
-
+    
+    这是一个用于存储 [`Phi3Model`] 配置的类，用于实例化 Phi-3 模型，定义模型架构。
+    可以通过继承自 [`PretrainedConfig`] 的对象来控制模型的输出。
+    
     Args:
         vocab_size (`int`, *optional*, defaults to 32064):
             Vocabulary size of the Phi-3 model. Defines the number of different tokens that can be represented by the
@@ -111,9 +113,11 @@ class Phi3Config(PretrainedConfig):
     >>> configuration = model.config
     ```"""
 
+    # 设置模型类型及推理时忽略的键
     model_type = "phi3"
     keys_to_ignore_at_inference = ["past_key_values"]
 
+    # 初始化函数，定义各种参数
     def __init__(
         self,
         vocab_size=32064,
@@ -140,12 +144,14 @@ class Phi3Config(PretrainedConfig):
         sliding_window=None,
         **kwargs,
     ):
+        # 初始化各种参数并将其赋值给对象的属性
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
         self.intermediate_size = intermediate_size
         self.num_hidden_layers = num_hidden_layers
         self.num_attention_heads = num_attention_heads
 
+        # 如果num_key_value_heads为None，默认等于num_attention_heads
         if num_key_value_heads is None:
             num_key_value_heads = num_attention_heads
 
@@ -165,6 +171,7 @@ class Phi3Config(PretrainedConfig):
         self._rope_scaling_validation()
         self.sliding_window = sliding_window
 
+        # 调用父类的初始化函数
         super().__init__(
             bos_token_id=bos_token_id,
             eos_token_id=eos_token_id,
@@ -173,55 +180,63 @@ class Phi3Config(PretrainedConfig):
             **kwargs,
         )
 
+    # 私有方法，调整rope_scaling的配置，保持向后兼容性
     def _rope_scaling_adjustment(self):
-        """
-        Adjust the `type` of the `rope_scaling` configuration for backward compatibility.
-        """
         if self.rope_scaling is None:
             return
 
         rope_scaling_type = self.rope_scaling.get("type", None)
 
-        # For backward compatibility if previous version used "su" or "yarn"
+        # 如果以前使用“su”或“yarn”，则将其更改为“longrope”
         if rope_scaling_type is not None and rope_scaling_type in ["su", "yarn"]:
             self.rope_scaling["type"] = "longrope"
 
+    # 私有方法，验证rope_scaling的配置是否合法
     def _rope_scaling_validation(self):
-        """
-        Validate the `rope_scaling` configuration.
-        """
         if self.rope_scaling is None:
             return
 
+        # 验证rope_scaling是否为字典且包含三个字段
         if not isinstance(self.rope_scaling, dict) or len(self.rope_scaling) != 3:
             raise ValueError(
-                "`rope_scaling` must be a dictionary with three fields, `type`, `short_factor` and `long_factor`, "
-                f"got {self.rope_scaling}"
+                "`rope_scaling` 必须是包含三个字段（`type`, `short_factor`, `long_factor`）的字典，"
+                f"但获得了 {self.rope_scaling}"
             )
+
         rope_scaling_type = self.rope_scaling.get("type", None)
         rope_scaling_short_factor = self.rope_scaling.get("short_factor", None)
         rope_scaling_long_factor = self.rope_scaling.get("long_factor", None)
+
+        # 验证type字段是否合法
         if rope_scaling_type is None or rope_scaling_type not in ["longrope"]:
-            raise ValueError(f"`rope_scaling`'s type field must be one of ['longrope'], got {rope_scaling_type}")
+            raise ValueError(f"`rope_scaling` 的 type 字段必须为 ['longrope'] 之一，但获得了 {rope_scaling_type}")
+
+        # 验证short_factor字段是否合法
         if not (
             isinstance(rope_scaling_short_factor, list)
             and all(isinstance(x, (int, float)) for x in rope_scaling_short_factor)
         ):
             raise ValueError(
-                f"`rope_scaling`'s short_factor field must be a list of numbers, got {rope_scaling_short_factor}"
+                f"`rope_scaling` 的 short_factor 字段必须为数字列表，但获得了 {rope_scaling_short_factor}"
             )
+
+        # 验证short_factor字段长度是否合法
         if not len(rope_scaling_short_factor) == self.hidden_size // self.num_attention_heads // 2:
             raise ValueError(
-                f"`rope_scaling`'s short_factor field must have length {self.hidden_size // self.num_attention_heads // 2}, got {len(rope_scaling_short_factor)}"
+                f"`rope_scaling` 的 short_factor 字段长度必须为 {self.hidden_size // self.num_attention_heads // 2}，但获得了 {len(rope_scaling_short_factor)}"
             )
+
+        # 验证long_factor字段是否合法
         if not (
             isinstance(rope_scaling_long_factor, list)
             and all(isinstance(x, (int, float)) for x in rope_scaling_long_factor)
         ):
             raise ValueError(
-                f"`rope_scaling`'s long_factor field must be a list of numbers, got {rope_scaling_long_factor}"
+                f"`rope_scaling` 的 long_factor 字段必须为数字列表，但获得了 {rope_scaling_long_factor}"
             )
+
+        # 验证long_factor字段长度是否合法
         if not len(rope_scaling_long_factor) == self.hidden_size // self.num_attention_heads // 2:
             raise ValueError(
-                f"`rope_scaling`'s long_factor field must have length {self.hidden_size // self.num_attention_heads // 2}, got {len(rope_scaling_long_factor)}"
+                f"`rope_scaling` 的 long_factor 字段长度必须为 {self.hidden_size // self.num_attention_heads // 2}，但获得了 {len(rope_scaling_long_factor)}"
             )
